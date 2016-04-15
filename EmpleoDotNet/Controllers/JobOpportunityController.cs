@@ -9,11 +9,15 @@ using EmpleoDotNet.ViewModel;
 using EmpleoDotNet.ViewModel.JobOpportunity;
 using reCAPTCHA.MVC;
 using System;
+using System.Security.Policy;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using EmpleoDotNet.Core.Domain;
 using EmpleoDotNet.ViewModel.JobOpportunityLike;
+using System.Security.Policy;
 using Microsoft.AspNet.Identity;
+using Tweetinvi.Core.Extensions;
 
 namespace EmpleoDotNet.Controllers
 {
@@ -103,12 +107,17 @@ namespace EmpleoDotNet.Controllers
                 return View(model).WithError("Debe seleccionar una Localidad.");
             }
 
+            if (!UrlHelperExtensions.IsImageAvailable(model.CompanyLogoUrl))
+            {
+                return View(model).WithError("La url del logo debe ser a una imagen en formato png o jpg");
+            }
+
             var jobOpportunity = model.ToEntity();
             var userId = User.Identity.GetUserId();
 
             _jobOpportunityService.CreateNewJobOpportunity(jobOpportunity, userId);
 
-            await _twitterService.PostNewJobOpportunity(jobOpportunity).ConfigureAwait(false);
+            await _twitterService.PostNewJobOpportunity(jobOpportunity,Url).ConfigureAwait(false);
 
             return RedirectToAction(nameof(Detail), new {
                 id = UrlHelperExtensions.SeoUrl(jobOpportunity.Id, jobOpportunity.Title)
@@ -136,7 +145,7 @@ namespace EmpleoDotNet.Controllers
 
             _jobOpportunityService.CreateNewJobOpportunity(jobOpportunity, User.Identity.GetUserId());
 
-            await _twitterService.PostNewJobOpportunity(jobOpportunity);
+            await _twitterService.PostNewJobOpportunity(jobOpportunity,Url);
 
             return RedirectToAction(nameof(Detail), new {
                 id = UrlHelperExtensions.SeoUrl(jobOpportunity.Id, jobOpportunity.Title),
