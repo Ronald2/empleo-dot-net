@@ -9,15 +9,11 @@ using EmpleoDotNet.ViewModel;
 using EmpleoDotNet.ViewModel.JobOpportunity;
 using reCAPTCHA.MVC;
 using System;
-using System.Security.Policy;
 using System.Linq;
 using System.Net;
-using System.Text.RegularExpressions;
 using EmpleoDotNet.Core.Domain;
 using EmpleoDotNet.ViewModel.JobOpportunityLike;
-using System.Security.Policy;
 using Microsoft.AspNet.Identity;
-using Tweetinvi.Core.Extensions;
 
 namespace EmpleoDotNet.Controllers
 {
@@ -41,7 +37,7 @@ namespace EmpleoDotNet.Controllers
             return View(viewModel);
         }
 
-        // GET: /JobOpportunity/Detail/4-jobtitle
+        // GET: /jobs/4-jobtitle
         public ActionResult Detail(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
@@ -52,30 +48,33 @@ namespace EmpleoDotNet.Controllers
             if (jobOpportunityId == 0)
                 return RedirectToAction(nameof(Index));
 
-            var viewModel = _jobOpportunityService.GetJobOpportunityById(jobOpportunityId);
+            var jobOpportunity = _jobOpportunityService.GetJobOpportunityById(jobOpportunityId);
 
-            if (viewModel == null)
+            if (jobOpportunity == null)
                 return View(nameof(Index))
                     .WithError("La vacante solicitada no existe. Por favor escoge una vacante válida del listado");
 
-            var expectedUrl = UrlHelperExtensions.SeoUrl(jobOpportunityId, viewModel.Title.SanitizeUrl());
+            var expectedUrl = UrlHelperExtensions.SeoUrl(jobOpportunityId, jobOpportunity.Title.SanitizeUrl());
 
             if (!expectedUrl.Equals(id, StringComparison.OrdinalIgnoreCase))
                 return RedirectToActionPermanent(nameof(Detail), new { id = expectedUrl });
 
             ViewBag.RelatedJobs =
-                _jobOpportunityService.GetCompanyRelatedJobs(jobOpportunityId, viewModel.CompanyName);
+                _jobOpportunityService.GetCompanyRelatedJobs(jobOpportunityId, jobOpportunity.CompanyName);
 
             ViewBag.CanLike = !CookieHelper.Exists(GetLikeCookieName(jobOpportunityId));
 
-            var cookieView = $"JobView{viewModel.Id}";
-            if (!CookieHelper.Exists(cookieView))
-            {
-                _jobOpportunityService.UpdateViewCount(viewModel.Id);
-                CookieHelper.Set(cookieView, viewModel.Id.ToString());
+            var cookieView = $"JobView{jobOpportunity.Id}";
+
+            if (IsJobOpportunityOwner(id) || CookieHelper.Exists(cookieView))
+            {               
+                return View(nameof(Detail), jobOpportunity);
             }
 
-            return View(nameof(Detail), viewModel);
+            _jobOpportunityService.UpdateViewCount(jobOpportunity.Id);
+            CookieHelper.Set(cookieView, jobOpportunity.Id.ToString());
+
+            return View(nameof(Detail), jobOpportunity);
         }
 
         [HttpGet]
@@ -107,7 +106,7 @@ namespace EmpleoDotNet.Controllers
                 return View(model).WithError("Debe seleccionar una Localidad.");
             }
 
-            if (!UrlHelperExtensions.IsImageAvailable(model.CompanyLogoUrl))
+            if (!string.IsNullOrWhiteSpace(model.CompanyLogoUrl) && !UrlHelperExtensions.IsImageAvailable(model.CompanyLogoUrl))
             {
                 return View(model).WithError("La url del logo debe ser a una imagen en formato png o jpg");
             }
@@ -132,6 +131,40 @@ namespace EmpleoDotNet.Controllers
             return View(viewModel);
         }
 
+        [HttpGet]
+        [Authorize]
+        public ActionResult Edit(string title)
+        {
+            var id = GetIdFromTitle(title);
+            var job = _jobOpportunityService.GetJobOpportunityById(id);
+
+            if (!IsJobOpportunityOwner(title))
+                return RedirectToAction("Detail", new {id = title});
+
+            var wizardvm = ViewModel.JobOpportunity.Wizard.FromEntity(job);
+            return View("Wizard", wizardvm);
+        }
+
+        [Authorize]
+        public ActionResult Delete(string title, bool returnPrevious = true)
+        {
+            var jobId = GetIdFromTitle(title);
+            var jobOpportunity = _jobOpportunityService.GetJobOpportunityById(jobId);
+            if (IsJobOpportunityOwner(title))
+            {
+                _jobOpportunityService.SoftDeleteJobOpportunity(jobOpportunity);
+            }
+
+            if (Request.UrlReferrer == null || returnPrevious == false)
+            {
+                return RedirectToAction("Index", "Home")
+                        .WithSuccess($"Se ha borrado exitosamente la oportunidad de empleo: {jobOpportunity.Title}");
+            }
+
+            return Redirect(Request.UrlReferrer.ToString())
+                        .WithSuccess($"Se ha borrado exitosamente la oportunidad de empleo: {jobOpportunity.Title}");
+        }
+
         [HttpPost, ValidateAntiForgeryToken]
         [ValidateInput(false)]
         [CaptchaValidator(RequiredMessage = "Por favor confirma que no eres un robot", ErrorMessage = "El captcha es incorrecto.")]
@@ -142,12 +175,21 @@ namespace EmpleoDotNet.Controllers
                     .WithError("Han ocurrido errores de validación que no permiten continuar el proceso");
 
             var jobOpportunity = model.ToEntity();
+            var jobExists = _jobOpportunityService.JobExists(model.Id);
 
-            _jobOpportunityService.CreateNewJobOpportunity(jobOpportunity, User.Identity.GetUserId());
+            if (!jobExists)
+            {
+                _jobOpportunityService.CreateNewJobOpportunity(jobOpportunity, User.Identity.GetUserId());
+            }
+            else
+            {
+                _jobOpportunityService.UpdateJobOpportunity(model.Id, model.ToEntity());
+            }
 
             await _twitterService.PostNewJobOpportunity(jobOpportunity,Url);
 
-            return RedirectToAction(nameof(Detail), new {
+            return RedirectToAction(nameof(Detail), new
+            {
                 id = UrlHelperExtensions.SeoUrl(jobOpportunity.Id, jobOpportunity.Title),
                 fromWizard = 1
             });
@@ -221,6 +263,14 @@ namespace EmpleoDotNet.Controllers
                 return 0;
 
             return id;
+        }
+
+        private bool IsJobOpportunityOwner(string title)
+        {
+            var id = GetIdFromTitle(title);
+            var jobOpportunity = _jobOpportunityService.GetJobOpportunityById(id);
+            var currentUser = User.Identity.GetUserId();
+            return (currentUser != null && jobOpportunity.UserProfile?.UserId == currentUser);
         }
 
         public JobOpportunityController(

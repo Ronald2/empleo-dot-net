@@ -84,7 +84,7 @@ namespace EmpleoDotNet.Controllers
                     user = _authenticationService.CreateUserWithSocialProvider(login, result.Identity);
                     await SignInAsync(user, isPersistent: false).ConfigureAwait(false);
 
-                    return RedirectToAction("Profile", new { returnUrl });
+                    return RedirectToAction("Profile", new {returnUrl});
                 }
                 catch (Exception ex)
                 {
@@ -208,7 +208,7 @@ namespace EmpleoDotNet.Controllers
 
         public ActionResult Profile()
         {
-            var user = _userProfileRepository.GetByUserId(this.User.Identity.GetUserId());
+            var user = _userProfileRepository.GetByUserId(User.Identity.GetUserId());
 
             return View(user);
         }

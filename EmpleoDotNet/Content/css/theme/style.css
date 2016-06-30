@@ -99,6 +99,21 @@ body {
 	padding-top: 65px;
 }
 
+.layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.layout__header,
+.layout__footer {
+    flex: none;
+}
+
+.layout__content {
+    flex: 1;
+}
+
 	#home {
 		padding-top: 0;
 	}
@@ -195,6 +210,16 @@ textarea {
 	.btn-default {
 		border: 2px solid #fff;
 	}
+
+    .btn-danger {
+        color: #fff;
+        background: rgba(255, 0, 0, 0.69);
+        border-color: transparent;
+    }
+    .btn-danger:hover {
+        background: rgba(255, 0, 0, 1);
+        border-color: transparent;
+    }
 
 		article .btn-default {
 			border: 1px solid #14b1bb;
@@ -876,20 +901,20 @@ header {
 }
 
 	.jobs a {
-		border-bottom: 1px solid #e7e7e7;
 		color: #888;
-		display: block;
+		display: table-cell;
 		padding: 15px 0;
 		position: relative;
 		width: 100%;
 	}
 
-		.jobs a.featured {
+		.jobs div.featured {
 			background: #f8f8f8;
 			border-bottom: 1px solid #14b1bb;
+            display:table;
 		}
 
-		.jobs a:hover,
+		.jobs .featured:hover,
 		.jobs a.featured:hover {
 			background: #f2f2f2;
 		}
@@ -907,6 +932,21 @@ header {
 			color: #222;
 			font-weight: normal;
 		}
+
+        .jobs a.admin-btn {
+            display: table-cell;
+            margin: 0 auto;
+            vertical-align: middle;
+            padding: 0 5px;
+            color: #fff;
+        }
+        .jobs a.edit-btn {
+            background-color: rgba(20, 177, 187, 0.62);
+        }
+
+        .jobs a.delete-btn {
+            background-color: rgba(255, 0, 0, 0.62);
+        }
 
 	.jobs .hidden-job {
 		display: none;
@@ -1857,6 +1897,10 @@ header {
 		.color2 {
 			background: url(../images/background.jpg);
 		}
+        
+        .page-content{
+            margin-top: 50px;
+        }
 
 		#contact div[class*="col"],
 		#prefooter div[class*="col"] {
