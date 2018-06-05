@@ -16,7 +16,7 @@ namespace EmpleoDotNet.Repository
     {
         public List<JobOpportunity> GetAllJobOpportunities()
         {
-            var jobOpportunities = DbSet
+            var jobOpportunities = DbSet.Where(x => x.IsHidden == false && x.Approved == true)
                 .Include(x => x.JobOpportunityLocation)
                 .OrderByDescending(x => x.PublishedDate);
             
@@ -28,7 +28,7 @@ namespace EmpleoDotNet.Repository
             var relatedJobs = DbSet
                 .Where(
                     x =>
-                        x.Id != id &&
+                        x.Id != id && x.IsHidden == false && x.Approved == true &&
                         (x.CompanyName.Equals(name,System.StringComparison.InvariantCultureIgnoreCase) 
                         )).OrderByDescending(x =>x.ViewCount)
                         .Take(5)
@@ -40,16 +40,21 @@ namespace EmpleoDotNet.Repository
         public List<JobCategoryCountDto> GetMainJobCategoriesCount()
         {
             var result = (from c in DbSet
-                where (c.Category == JobCategory.MobileDevelopment ||
-                       c.Category == JobCategory.SoftwareDevelopment ||
-                       c.Category == JobCategory.WebDevelopment ||
-                       c.Category == JobCategory.GraphicDesign)
+                              /*where  (c.Category == JobCategory.MobileDevelopment ||
+                                     c.Category == JobCategory.SoftwareDevelopment ||
+                                     c.Category == JobCategory.WebDevelopment ||
+                                     c.Category == JobCategory.GraphicDesign)*/
+                where (c.Category >= 0)
                 group c by new { c.Category} into g
+
                 select new JobCategoryCountDto
                 {
                     JobCategory = g.Key.Category,
                     Count = g.Count()
-                }).ToList();
+                }).Where(x=>x.Count > 0)
+                  .OrderByDescending(x=>x.Count)
+                  .ThenBy(x=>x.JobCategory)
+                  .Take(5).ToList();
 
             return result;
         }
@@ -89,10 +94,10 @@ namespace EmpleoDotNet.Repository
                 .Include(x => x.JobOpportunityLocation);
 
             jobs = jobs
-                .OrderByDescending(x => x.Likes)
-                .ThenByDescending(x => x.Id);
+                .OrderByDescending(x => x.PublishedDate).Where(x => x.IsHidden == false && x.Approved == true);
             
             //Filter by JobCategory
+            if(parameter.JobCategory!= JobCategory.None)
                 jobs = jobs.Where(x => x.Category == parameter.JobCategory);
 
             if (parameter.IsRemote)
@@ -162,7 +167,8 @@ namespace EmpleoDotNet.Repository
 
         public List<JobOpportunity> GetLatestJobOpportunity(int quantity)
         {
-            return GetAll().OrderByDescending(m => m.PublishedDate)
+            return GetAll().Where(x => x.IsHidden == false && x.Approved == true)
+                .OrderByDescending(m => m.PublishedDate)
                 .ThenByDescending(x => x.Likes)
                 .Include(m => m.JobOpportunityLocation)
                 .Take(quantity)

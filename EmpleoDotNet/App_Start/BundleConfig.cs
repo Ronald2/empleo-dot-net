@@ -32,6 +32,7 @@ namespace EmpleoDotNet
                       "~/Content/responsive.css"));
 
             bundles.Add(new ScriptBundle("~/bundles/app").Include(
+                        "~/Scripts/jobOpportunity/Likes.js",
                         "~/Scripts/app.js"
                         ));
 
@@ -56,7 +57,9 @@ namespace EmpleoDotNet
                 "~/Scripts/theme/jquery.ba-cond.min.js",
                 "~/Scripts/theme/bootstrap3-wysihtml5.all.min.js",
                 "~/Scripts/theme/instafedd.min.js",
-                "~/Scripts/theme/jflickrfeed.min.js"));
+                "~/Scripts/theme/jflickrfeed.min.js",
+                "~/Scripts/sweetalert2.js",
+                "~/Scripts/icheck.min.js"));
         }
 
         private static void RegisterTemplateStyles(BundleCollection bundles)
@@ -67,7 +70,9 @@ namespace EmpleoDotNet
                 "~/Content/css/theme/animate.css",
                 "~/Content/css/theme/jquery.fancybox.css", 
                 "~/Content/css/theme/jquery.nouislider.css",
-                "~/Content/css/theme/style.css"));
+                "~/Content/css/theme/style.css",
+                "~/Content/sweetalert2.css",
+                "~/Content/flat/green.css"));
         }
     }
 }
