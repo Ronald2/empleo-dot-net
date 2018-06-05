@@ -75,6 +75,13 @@ namespace EmpleoDotNet.AppServices
             jobOpportunity.IsActive = false;
             _jobOpportunityRepository.SaveChanges();
         }
+
+        public void ToggleHideState(JobOpportunity jobOpportunity)
+        {
+            jobOpportunity.IsHidden = !jobOpportunity.IsHidden;
+            _jobOpportunityRepository.SaveChanges();
+        }
+
         public List<JobOpportunity> GetCompanyRelatedJobs(int id, string name)
         {
             var result = _jobOpportunityRepository.GetRelatedJobs(id,name);
@@ -94,11 +101,11 @@ namespace EmpleoDotNet.AppServices
 
         public void UpdateViewCount(int id)
         {
-            var item = _jobOpportunityRepository.GetJobOpportunityById(id);
+            var jobOpportunity = _jobOpportunityRepository.GetJobOpportunityById(id);
 
-            if (item == null) return;
+            if (jobOpportunity == null) return;
 
-            item.ViewCount++;
+            jobOpportunity.ViewCount++;
             _jobOpportunityRepository.SaveChanges();           
         }
 
@@ -112,6 +119,15 @@ namespace EmpleoDotNet.AppServices
             return _jobOpportunityRepository.JobExists(id);
         }
 
+        public void CreateNewReaction(int jobOpportunityId, bool like)
+        {
+            var job = _jobOpportunityRepository.GetJobOpportunityById(jobOpportunityId);
+            if (job == null) return;
+            if (like) job.Likes++;
+            else job.DisLikes++;
+            _jobOpportunityRepository.SaveChanges();
+        }
+
         public JobOpportunityService(
             IJobOpportunityRepository jobOpportunityRepository,
             IUserProfileRepository userProfileRepository
@@ -120,7 +136,6 @@ namespace EmpleoDotNet.AppServices
             _jobOpportunityRepository = jobOpportunityRepository;
             _userProfileRepository = userProfileRepository;
         }
-
         private readonly IJobOpportunityRepository _jobOpportunityRepository;
         private readonly IUserProfileRepository _userProfileRepository;
     }

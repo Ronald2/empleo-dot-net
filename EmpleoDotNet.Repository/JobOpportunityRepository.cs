@@ -18,7 +18,6 @@ namespace EmpleoDotNet.Repository
         {
             var jobOpportunities = DbSet
                 .Include(x => x.JobOpportunityLocation)
-                .Include(x => x.JobOpportunityLikes)
                 .OrderByDescending(x => x.PublishedDate);
             
             return jobOpportunities.ToList();
@@ -61,7 +60,6 @@ namespace EmpleoDotNet.Repository
 
             return DbSet.Include(x => x.JobOpportunityLocation)
                         .Include(x => x.JoelTest)
-                        .Include(x => x.JobOpportunityLikes)
                         .FirstOrDefault(x => x.Id.Equals(id.Value));
         }
 
@@ -88,15 +86,13 @@ namespace EmpleoDotNet.Repository
                 parameter.PageSize = 15;
 
             var jobs = DbSet
-                .Include(x => x.JobOpportunityLocation)
-                .Include(x => x.JobOpportunityLikes);
+                .Include(x => x.JobOpportunityLocation);
 
             jobs = jobs
-                .OrderByDescending(x => x.JobOpportunityLikes.Count(l => l.Like))
+                .OrderByDescending(x => x.Likes)
                 .ThenByDescending(x => x.Id);
             
             //Filter by JobCategory
-            if ((parameter.JobCategory != JobCategory.All && parameter.JobCategory != JobCategory.Invalid))
                 jobs = jobs.Where(x => x.Category == parameter.JobCategory);
 
             if (parameter.IsRemote)
@@ -167,9 +163,8 @@ namespace EmpleoDotNet.Repository
         public List<JobOpportunity> GetLatestJobOpportunity(int quantity)
         {
             return GetAll().OrderByDescending(m => m.PublishedDate)
-                .ThenByDescending(x => x.JobOpportunityLikes.Count(c => c.Like))
+                .ThenByDescending(x => x.Likes)
                 .Include(m => m.JobOpportunityLocation)
-                .Include(x => x.JobOpportunityLikes)
                 .Take(quantity)
                 .ToList();
         }
