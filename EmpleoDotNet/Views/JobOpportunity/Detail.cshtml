@@ -11,11 +11,25 @@
     ViewBag.ImageUrl = Model.CompanyLogoUrl;
 
     @Html.AntiForgeryToken();
-
+   
+    @*<section id="ad">
+           
+    </section>*@
     <section id="title">
         <div class="container">
             <div class="row">
                 <div class="col-sm-12 text-center">
+                    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+                    <!-- Vertical-JobPost -->
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-client="ca-pub-6752909492230270"
+                         data-ad-slot="8952844875"
+                         data-ad-format="auto"
+                         data-full-width-responsive="true"></ins>
+                    <script>
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
                     <h1>@Model.Title</h1>
                     <div class="job-title">
                         @if (Model.JobOpportunityLocation == null)
@@ -57,11 +71,6 @@
                                 @Html.Raw(Model.HowToApply)
                             </article>
                         }
-
-                        <p>
-                            Enviar CV a <a href="mailto:@Model.CompanyEmail">@Model.CompanyEmail</a>, recuerda agregar tu cover letter.
-                        </p>
-
                     </article>
                     <article>
                         @if (Model.JoelTest != null)
@@ -70,7 +79,7 @@
                         }
                     </article>
                 </div>
-                <div class="col-sm-4" id="sidebar">
+                <div class="col-sm-4" id="sidebar">.
                     @if (Model.UserProfile?.UserId == User.Identity.GetUserId())
                     {
                         var titleUrl = UrlHelperExtensions.SeoUrl(Model.Id, Model.Title);
@@ -111,11 +120,6 @@
                                 <span>@Model.Likes.FormatThousand()</span>
                             </a>
                         </div>
-                    </div>
-                    <div class="sidebar-widget text-center">
-                        <a href="http://bit.ly/cdcempleado">
-                            <img style="max-height:310px; max-width: 310px; height: auto; width: auto;" class="img-fluid" src="~/Content/img/cdc-banner.png" />
-                        </a>
                     </div>
                     <div class="sidebar-widget" id="share">
                         <h2>Compartir</h2>

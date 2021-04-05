@@ -104,10 +104,33 @@
             }
         </div>
 
-        <div class="col-md-4 col-lg-4">
-            <div class="row text-center">
-                <a href="http://bit.ly/cdcempleado"><img style="margin-top:72px; max-height:310px; max-width: 310px; height: auto; width: auto;" class="img-fluid" src="~/Content/img/cdc-banner.png" /></a>
-            </div>
+        <div class="col-md-4 col-lg-4">	
+            <div class="row text-center">	
+                @{
+                    var randomGenerator = new Random();
+                }
+                @if((DateTime.UtcNow.Millisecond%2) == 0)	
+                {
+                    <a href="http://bit.ly/streamelopersub"><img style="margin-top:72px; max-height:310px; max-width: 310px; height: auto; width: auto;" class="img-fluid" src="~/Content/img/banners/subscribe-banner.gif" /></a>	
+                }	
+                else	
+                {	
+                    var selector = (randomGenerator.Next()%3) + 1;
+
+                    switch(selector)
+                    {
+                        case 1:
+                            <a href="https://bit.ly/xam-dev"><img style="margin-top:72px; max-height:310px; max-width: 310px; height: auto; width: auto;" class="img-fluid" src="~/Content/img/banners/megsoft-job.png" /></a>	
+                            break;
+                        case 2:
+                            <a href="http://devhiring.com/qa-automation-engineer/"><img style="margin-top:72px; max-height:310px; max-width: 310px; height: auto; width: auto;" class="img-fluid" src="~/Content/img/banners/devhire3.png" /></a>	
+                            break;
+                        case 3:
+                            <a href="https://bit.ly/newtech-empleado"><img style="margin-top:72px; max-height:310px; max-width: 310px; height: auto; width: auto;" class="img-fluid" src="~/Content/img/banners/newtech.png" /></a>	
+                            break;
+                    }
+                }	
+            </div>	
         </div>
     </div>
 </div>

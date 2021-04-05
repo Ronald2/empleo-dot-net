@@ -60,7 +60,9 @@ namespace EmpleoDotNet.Controllers
 
             if (jobOpportunity.Approved == false)
                 return View(nameof(Detail))
-                    .WithInfo("Esta vacante no ha sido aprobada. Revise de nuevo más tarde.");
+                    .WithSuccess("Esta vacante no ha sido aprobada todavia. Si la acaba de someter, por favor revise de nuevo más tarde. Nuestros moderadores estarán revisando su solicitud en breve." +
+                    "Mientras tanto, puedes te sugerimos que contemples convertirte en un backer de nuestra plataforma. Más detalles en https://opencollective.com/emplea_do" +
+                    "");
 
             var expectedUrl = UrlHelperExtensions.SeoUrl(jobOpportunityId, jobOpportunity.Title.SanitizeUrl());
 
@@ -91,9 +93,9 @@ namespace EmpleoDotNet.Controllers
 
         [HttpGet]
 
-        [Authorize]
         public ActionResult New()
         {
+            return Redirect("https://beta.emplea.do");
             var viewModel = new NewJobOpportunityViewModel();
             viewModel.MapsApiKey = ConfigurationManager.AppSettings["GoogleMapsApiKey"];
 
@@ -119,7 +121,7 @@ namespace EmpleoDotNet.Controllers
                 return View(model).WithError("Debe seleccionar una Localidad.");
             }
 
-            if (!string.IsNullOrWhiteSpace(model.CompanyLogoUrl) && !UrlHelperExtensions.IsImageAvailable(model.CompanyLogoUrl))
+            if (!string.IsNullOrWhiteSpace(model.CompanyLogoUrl) && UrlHelperExtensions.IsValidImageUrl(model.CompanyLogoUrl))
             {
                 return View(model).WithError("La url del logo debe ser a una imagen en formato png o jpg");
             }
@@ -129,8 +131,14 @@ namespace EmpleoDotNet.Controllers
             jobOpportunity.Approved = false;        // new jobs unapproved by default
 
             _jobOpportunityService.CreateNewJobOpportunity(jobOpportunity, userId);
-
-            await _slackService.PostNewJobOpportunity(jobOpportunity, Url).ConfigureAwait(false);
+            try
+            {
+                await _slackService.PostNewJobOpportunity(jobOpportunity, Url).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Elmah.ErrorSignal.FromCurrentContext().Raise(ex);
+            }
 
             return RedirectToAction(nameof(Detail), new
             {
@@ -141,6 +149,7 @@ namespace EmpleoDotNet.Controllers
         [HttpGet]
         public ActionResult Wizard()
         {
+            return Redirect("https://beta.emplea.do");
             var viewModel = new Wizard();
             viewModel.MapsApiKey = ConfigurationManager.AppSettings["GoogleMapsApiKey"];
             return View(viewModel);
@@ -212,8 +221,15 @@ namespace EmpleoDotNet.Controllers
             {
                 _jobOpportunityService.UpdateJobOpportunity(model.Id, model.ToEntity());
             }
-            
-            await _slackService.PostNewJobOpportunity(jobOpportunity, Url);
+
+            try
+            {
+                await _slackService.PostNewJobOpportunity(jobOpportunity, Url);
+            }
+            catch (Exception ex)
+            {
+                Elmah.ErrorSignal.FromCurrentContext().Raise(ex);
+            }
 
             return RedirectToAction(nameof(Detail), new
             {
@@ -269,8 +285,10 @@ namespace EmpleoDotNet.Controllers
                 {
                     jobOpportunity.Approved = true;
                     _jobOpportunityService.UpdateJobOpportunity(jobOpportunityId, jobOpportunity);
-                    await _slackService.PostJobOpportunityResponse(jobOpportunity, Url, payload.response_url, payload?.user?.id, true);
-                    await _twitterService.PostNewJobOpportunity(jobOpportunity, Url).ConfigureAwait(false);
+                    await _slackService
+                        .PostJobOpportunityResponse(jobOpportunity, Url, payload.response_url, payload?.user?.id, true);
+                    await _twitterService
+                        .PostNewJobOpportunity(jobOpportunity, Url).ConfigureAwait(false);
                 }
                 else if (isTokenValid && isJobRejected)
                 {
